@@ -54,11 +54,7 @@ jobs:
         env:
           CI: true
         run: |
-          npm config set @minecraftmetsascript:registry=https://npm.pkg.github.com -L global
-          # Remove local
-          bun remove @minecraftmetascript/mms-wasm
-          # Install remove
-          bun i @minecraftmetascript/mms-wasm
+          bun i @minecraftmetascript/mms-wasm@latest
           bun install
           bun run build
 
