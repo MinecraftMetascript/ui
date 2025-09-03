@@ -20,9 +20,9 @@ MyStrangeSurface := SurfaceRule {
  `.trim()
 	},
 	{
-		label: 'Vanilla Overwordl Badlands',
+		label: 'Vanilla Overworld Badlands',
 		content: `
-    namespace MySpace;
+namespace MySpace;
 
 InBadlands := SurfaceCondition {
     Biome [
@@ -95,6 +95,6 @@ Badlands := SurfaceRule {
         If (StoneDepth Floor 0 add 0) WhiteTerracotta
     ]
 }
-`
+`.trim()
 	}
 ];

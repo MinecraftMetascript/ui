@@ -52,7 +52,7 @@
 	});
 </script>
 
-<div class="flex h-svh min-h-svh w-svw flex-col gap-8 px-8 pb-8">
+<div class="grid grid-rows-[auto_1fr] max-h-svh h-svh min-h-svh w-svw gap-8 px-8 pb-8">
 	<header class="relative px-2 py-1">
 		<h1 class="text-xl font-bold">Minecraft Metascript Demo Editor</h1>
 		<p class="max-w-[100ch] text-xs">
@@ -71,9 +71,9 @@
 	{#await project.init()}
 		Initializing your MMS Project...
 	{:then _}
-		<div class="grid flex-1 grid-cols-5 gap-4">
+		<div class="grid flex-1 grid-cols-5 grid-rows-6 gap-4 min-h-0">
 			<aside
-				class="col-span-1 flex h-full w-full flex-col gap-4 overflow-x-hidden bg-slate-100 px-2 py-1 font-mono text-sm text-ellipsis"
+				class="col-span-1 row-span-6 flex h-full w-full flex-col gap-4 overflow-x-hidden bg-slate-100 px-2 py-1 font-mono text-sm text-ellipsis"
 			>
 				<section class="w-full">
 					<h2 class="font-bold uppercase">Project Files</h2>
@@ -103,19 +103,23 @@
 					{/if}
 				</section>
 			</aside>
-			<div class="col-span-4 flex flex-1 flex-col gap-4">
-				<Mirror {project} />
+			<div class="col-span-4 row-span-6 max-h-full grid grid-cols-1 grid-rows-subgrid gap-4 overflow-y-auto">
+				<div class="row-span-4 min-h-0">
+					<Mirror {project} />
+				</div>
 				{#if previewContent}
-					<h2 class="text-lg">
-						Preview:
-						<span class="text-sm text-slate-400"
-							>{selectedPreview?.path.slice(0, -1).join('/')}{(selectedPreview?.path.length ?? 0) >
-							1
-								? '/'
-								: ''}</span
-						><span class="font-bold">{selectedPreview?.path.at(-1)}</span>
-					</h2>
-					<div {@attach preview(previewContent)} class="w-full text-sm"></div>
+					<div class="row-span-2 overflow-y-auto min-h-0">
+						<h2 class="text-lg">
+							Preview:
+							<span class="text-sm text-slate-400"
+								>{selectedPreview?.path.slice(0, -1).join('/')}{(selectedPreview?.path.length ??
+									0) > 1
+									? '/'
+									: ''}</span
+							><span class="font-bold">{selectedPreview?.path.at(-1)}</span>
+						</h2>
+						<div {@attach preview(previewContent)} class="w-full overflow-y-auto text-sm"></div>
+					</div>
 				{/if}
 			</div>
 			<!-- TODO: Implement text preview panel here -->

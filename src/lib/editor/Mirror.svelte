@@ -83,24 +83,30 @@ MyStrangeSurface := SurfaceRule {
 	let selectedPreset = $state<null | string>(null);
 </script>
 
-<section class="flex w-full flex-col items-stretch">
+<section class="flex h-full w-full flex-col items-stretch">
 	<header class="flex justify-between px-8">
 		<h2 class="text-lg font-bold">Source Editor</h2>
-		<div>
-			<select bind:value={selectedPreset}>
+		<div class="flex items-center gap-4">
+			<select bind:value={selectedPreset} class="border-b border-b-slate-800">
 				<option disabled></option>
 				{#each presets as { label, content }}
 					<option value={content}>{label}</option>
 				{/each}
 			</select>
 			<button
+				disabled={!selectedPreset}
+				class="
+					px-1 py-0.5 hover:bg-slate-200
+					active:bg-slate-300 disabled:cursor-default disabled:bg-transparent disabled:text-gray-500
+				"
 				onclick={() => {
 					if (!selectedPreset) return;
 					file.updateContent(selectedPreset);
 					syncView();
+					selectedPreset = '';
 				}}>Load Preset</button
 			>
 		</div>
 	</header>
-	<div use:editor></div>
+	<div class="overflow-y-auto" use:editor></div>
 </section>
