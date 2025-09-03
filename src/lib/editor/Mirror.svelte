@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { EditorView } from 'codemirror';
 	import { CoreExtensions } from './CoreExtensions';
-	import type { MMSFile, MMSProject } from './MMSProject.svelte';
+	import type { MMSFile, MMSProject } from '$lib/MMSProject.svelte';
 	import { ViewPlugin, ViewUpdate } from '@codemirror/view';
 
 	import { type Diagnostic, linter } from '@codemirror/lint';
@@ -16,9 +16,24 @@
 
 	const file = project.createFile(
 		'wasm.mms',
-		`namespace xyz;
+		`namespace myPack;
 
-Sym := SurfaceRule { Block stone }`
+
+InFriendlyBiome := SurfaceCondition { Biome [ forest plains beach ] }
+InUnfriendlyBiome := SurfaceCondition { Biome [ forest plains beach ] }
+
+HoneySurface := SurfaceRule { Block honey }
+SlimeSurface := SurfaceRule { Block slime }
+
+
+MyStrangeSurface := SurfaceRule {
+  Sequence [
+    If (InFriendlyBiome) HoneySurface
+    If (InUnfriendlyBiome) SlimeSurface
+    Block magma
+  ]
+}
+`
 	);
 
 	const syncView = () => {
@@ -70,7 +85,7 @@ Sym := SurfaceRule { Block stone }`
 
 <section class="flex w-full flex-col items-stretch">
 	<header class="flex justify-between px-8">
-		<h2 class="font-bold text-lg">Source Editor</h2>
+		<h2 class="text-lg font-bold">Source Editor</h2>
 		<div>
 			<select bind:value={selectedPreset}>
 				<option disabled></option>

@@ -1,5 +1,5 @@
-import { Go, type FileTreeLike, type MmsSymbol } from '@mms/wasm';
-import MMSWasm from '@mms/wasm/dist/main.wasm?init';
+import { Go, type FileTreeLike, type MmsSymbol } from '@minecraftmetascript/mms-wasm';
+import MMSWasm from '@minecraftmetascript/mms-wasm/dist/main.wasm?init';
 
 export class MMSFile {
 	private _content: string;

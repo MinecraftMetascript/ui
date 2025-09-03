@@ -4,7 +4,7 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: [ "v2" ]
+    branches: ["v2"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -41,10 +41,10 @@ jobs:
       #     nix build ".#wasm"
       #     cp ./result/main.wasm ./ui/static/mms.wasm
 
-      - name: Fetch latest mms.wasm
-        run: |
-          wget $(curl -s https://api.github.com/repos/minecraftmetascript/mms/releases/latest | grep 'browser_' | cut -d\" -f4 | grep 'mms.wasm')
-          mv mms.wasm ./static/
+      # - name: Fetch latest mms.wasm
+      #   run: |
+      #     wget $(curl -s https://api.github.com/repos/minecraftmetascript/mms/releases/latest | grep 'browser_' | cut -d\" -f4 | grep 'mms.wasm')
+      #     mv mms.wasm ./static/
 
       # Build Webapp
       - name: Setup Bun
@@ -54,6 +54,7 @@ jobs:
         env:
           CI: true
         run: |
+          npm config set @minecraftmetsascript:registry=https://npm.pkg.github.com -L project
           bun install
           bun run build
 
@@ -65,7 +66,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: "./ui/build"
+          path: "./build"
 
       - name: Deploy to GitHub Pages
         id: deployment
