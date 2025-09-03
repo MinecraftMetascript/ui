@@ -2,15 +2,13 @@ export const presets = [
 	{
 		label: 'Simple Surface Conditions',
 		content: `
- namespace myPack;
-
+namespace myPack;
 
 InFriendlyBiome := SurfaceCondition { Biome [ forest plains beach ] }
 InUnfriendlyBiome := SurfaceCondition { Biome [ forest plains beach ] }
 
 HoneySurface := SurfaceRule { Block honey }
 SlimeSurface := SurfaceRule { Block slime }
-
 
 MyStrangeSurface := SurfaceRule {
   Sequence [
