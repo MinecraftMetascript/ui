@@ -2,6 +2,8 @@
 name: Deploy static content to Pages
 
 on:
+  repository_dispatch:
+    types: [mms_release]
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
