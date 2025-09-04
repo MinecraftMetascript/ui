@@ -16,24 +16,7 @@
 
 	const file = project.createFile(
 		'wasm.mms',
-		`namespace myPack;
-
-
-InFriendlyBiome := SurfaceCondition { Biome [ forest plains beach ] }
-InUnfriendlyBiome := SurfaceCondition { Biome [ forest plains beach ] }
-
-HoneySurface := SurfaceRule { Block honey }
-SlimeSurface := SurfaceRule { Block slime }
-
-
-MyStrangeSurface := SurfaceRule {
-  Sequence [
-    If (InFriendlyBiome) HoneySurface
-    If (InUnfriendlyBiome) SlimeSurface
-    Block magma
-  ]
-}
-`
+		presets[0].content
 	);
 
 	const syncView = () => {
