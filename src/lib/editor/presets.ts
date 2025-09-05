@@ -20,6 +20,20 @@ namespace myPack {
  `.trim()
 	},
 	{
+		label: 'Noise Preview Demo',
+		content: `
+// Use the sidebar to select one of the noise symbols to open the preview panel
+// In the future, there will be a button next to the variable name in the editor
+// to open the preview more quickly
+namespace x { 
+  Noise { 
+    BigNoise = Noise(-5).Amplitudes(5) 
+    SmallNoise = Noise(-3).Amplitudes(1, 5, 10) 
+  }
+}
+    `.trim()
+	},
+	{
 		label: 'Vanilla Overworld Badlands',
 		content: `
 namespace minecraft {
@@ -38,9 +52,9 @@ namespace minecraft {
         If (StoneDepth(Floor)) [
           If (
             Or (
-              Noise(minecraft:surface).Min(-0.909).Max(-0.5454)
-              Noise(minecraft:surface).Min(-0.1818).Max(0.1818)
-              Noise(minecraft:surface).Min(0.5454).Max(0.909)
+              NoiseThreshold(minecraft:surface).Min(-0.909).Max(-0.5454)
+              NoiseThreshold(minecraft:surface).Min(-0.1818).Max(0.1818)
+              NoiseThreshold(minecraft:surface).Min(0.5454).Max(0.909)
             )
           ) Block(minecraft:terracotta)
           Bandlands()

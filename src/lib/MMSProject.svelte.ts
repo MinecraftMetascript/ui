@@ -89,4 +89,14 @@ export class MMSProject {
 
 		return f;
 	};
+
+	getFile = (path: string[]) => {
+		return path.reduce<FileTreeLike | null>((fs: FileTreeLike | null, name: string) => {
+			if (fs?.isDir) {
+				return fs.children?.[name] ?? null;
+			} else {
+				return fs;
+			}
+		}, this.fs);
+	};
 }

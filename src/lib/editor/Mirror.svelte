@@ -1,22 +1,19 @@
 <script lang="ts">
 	import { EditorView } from 'codemirror';
 	import { CoreExtensions } from './CoreExtensions';
-	import type { MMSFile, MMSProject } from '$lib/MMSProject.svelte';
+	import type { MMSProject } from '$lib/MMSProject.svelte';
 	import { ViewPlugin, ViewUpdate } from '@codemirror/view';
 
 	import { type Diagnostic, linter } from '@codemirror/lint';
 	import type { Action } from 'svelte/action';
 	import { presets } from './presets';
+	import { useEditorContext } from './MMSEditor.svelte';
 
-	let {
-		project
-	}: {
-		project: MMSProject;
-	} = $props();
+	const { project } = useEditorContext();
 
 	const file = project.createFile(
 		'wasm.mms',
-		presets[0].content
+		`namespace x { Noise { TestNoise = Noise(-5).Amplitudes(5) } }`
 	);
 
 	const syncView = () => {
