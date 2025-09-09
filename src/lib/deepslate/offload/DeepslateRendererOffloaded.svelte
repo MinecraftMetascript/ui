@@ -124,7 +124,7 @@
 		};
 	};
 
-	let scale = $state(64);
+	let scale = $state(8);
 	let originX = $state(0);
 	let originY = $state(0);
 	let worldHeight = $state(256);
