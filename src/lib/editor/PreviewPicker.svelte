@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { groupBy } from 'es-toolkit';
 	import { TreeView } from '$lib/treeview';
-	import type { MMSProject } from '../MMSProject.svelte';
 	import type { FileTreeLike } from '@minecraftmetascript/mms-wasm';
 	import { useEditorContext } from './MMSEditor.svelte';
 
@@ -10,10 +9,14 @@
 </script>
 
 <section class="w-full">
-	<h2 class="font-bold uppercase">Project Files</h2>
-	{#if project.fs?.isDir}
-		{@render dir(project.fs, [])}
-	{/if}
+	<TreeView.Group>
+		{#snippet label()}
+			<h2 class="font-bold uppercase">Project Files</h2>
+		{/snippet}
+		{#if project.fs?.isDir}
+			{@render dir(project.fs, [])}
+		{/if}
+	</TreeView.Group>
 </section>
 <section class="w-full">
 	{#if project.symbols}
@@ -22,13 +25,16 @@
 				<h2 class="font-bold uppercase">Project Symbols</h2>
 			{/snippet}
 			{#each Object.entries(groupBy(Object.entries(project.symbols), ([name]) => name.split(':')[0])) as [namespace, nsSymbols]}
-				<TreeView.Group label={namespace}>
+				<TreeView.Group>
+					{#snippet label()}
+						<span class="text-sm font-bold">{namespace}</span>
+					{/snippet}
 					{#each Object.entries(groupBy(nsSymbols, ([k, v]) => v.type)) as [type, symbols]}
 						<TreeView.Group label={type}>
 							{#each symbols as [name, symbol]}
 								<TreeView.Item
 									onclick={() =>
-										(editor.selectedPreview = { source: 'symbol', path: [name], symbol })}
+										(editor.selectedPreview = { source: 'symbol', path: [name] })}
 									label={symbol.ref}
 								/>
 							{/each}

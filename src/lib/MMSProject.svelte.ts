@@ -1,5 +1,6 @@
 import { Go, type FileTreeLike, type MmsSymbol } from '@minecraftmetascript/mms-wasm';
 import MMSWasm from '@minecraftmetascript/mms-wasm/dist/main.wasm?init';
+import * as deepslate from 'deepslate';
 
 export class MMSFile {
 	private _content: string;
@@ -44,7 +45,7 @@ export class MMSProject {
 		signal?.addEventListener('abort', () => {
 			console.log('Abort Signal Received. Quitting MMS');
 			this.goInstance.exit(1);
-		});
+		});	
 	}
 
 	constructor() {
@@ -70,6 +71,19 @@ export class MMSProject {
 	get symbols() {
 		return this._symbols;
 	}
+	private set symbols(next: Record<string, MmsSymbol> | null) {
+		for (const [k, v] of Object.entries(next ?? {})) {
+			switch (v.type) {
+				case 'Noise': {
+					deepslate.WorldgenRegistries.NOISE.register(
+						new deepslate.Identifier(...(v.ref.split(':') as [string, string])),
+						deepslate.NoiseParameters.fromJson(v.value)
+					);
+				}
+			}
+		}
+		this._symbols = next;
+	}
 
 	private _source: Record<string, string>;
 	get source() {
@@ -79,7 +93,7 @@ export class MMSProject {
 	readonly onProjectUpdate = (proj: string) => {
 		const data = JSON.parse(proj);
 		this._fs = data.files;
-		this._symbols = data.symbols;
+		this.symbols = data.symbols;
 		this._source = data.source;
 	};
 

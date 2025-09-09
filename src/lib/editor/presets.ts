@@ -2,7 +2,7 @@ export const presets = [
 	{
 		label: 'Simple Surface Conditions',
 		content: `
-namespace myPack {
+Namespace mms_demo {
   Surface {
     InFriendlyBiome = Biome(forest, plains, beach)
     InUnfriendlyBiome = Biome(desert, badlands, deep_ocean)
@@ -25,7 +25,7 @@ namespace myPack {
 // Use the sidebar to select one of the noise symbols to open the preview panel
 // In the future, there will be a button next to the variable name in the editor
 // to open the preview more quickly
-namespace x { 
+Namespace mms_demo { 
   Noise { 
     BigNoise = Noise(-5).Amplitudes(5) 
     SmallNoise = Noise(-3).Amplitudes(1, 5, 10) 
@@ -33,10 +33,26 @@ namespace x {
 }
     `.trim()
 	},
+  {
+    label: "Density Function (Noise)",
+    content: `Namespace mms_demo {
+  Noise {
+    my_noise = Noise(-5).Amplitudes(3)
+  }
+
+  DensityFn {
+    builtin_noise = Noise(minecraft:cave_cheese)
+    custom_noise = Noise(my_noise)
+    
+    inline_definition = Noise(-1).Amplitudes(1,2).XZScale(1).YScale(100)
+    
+  }
+}`.trim()
+  },
 	{
 		label: 'Vanilla Overworld Badlands',
 		content: `
-namespace minecraft {
+Namespace minecraft {
   Surface {
     InBadlands = Biome(
       minecraft:badlands,

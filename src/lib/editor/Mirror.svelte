@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { EditorView } from 'codemirror';
 	import { CoreExtensions } from './CoreExtensions';
-	import type { MMSProject } from '$lib/MMSProject.svelte';
+	import { LSPClient, LSPPlugin } from '@codemirror/lsp-client';
 	import { ViewPlugin, ViewUpdate } from '@codemirror/view';
 
 	import { type Diagnostic, linter } from '@codemirror/lint';
@@ -13,7 +13,7 @@
 
 	const file = project.createFile(
 		'wasm.mms',
-		`namespace x { Noise { TestNoise = Noise(-5).Amplitudes(5) } }`
+		`Namespace x { DensityFn { TestNoise = Noise(-5).Amplitudes(5) } }`
 	);
 
 	const syncView = () => {
@@ -31,8 +31,18 @@
 
 	let view = $state<EditorView | null>(null);
 	const editor: Action = (node: HTMLElement) => {
+		// const lspClient = new LSPClient();
+		// lspClient.connect({
+		// 	send() {
+
+		// 	},
+		// 	subscribe() {},
+		// 	unsubscribe() {}
+		// });
+
 		view = new EditorView({
 			extensions: [
+				// lspClient.plugin("wasm.mms"),
 				linter(() => {
 					return (
 						file.diagnostics
@@ -58,6 +68,7 @@
 			],
 			parent: node
 		});
+
 		syncView();
 	};
 	let selectedPreset = $state<null | string>(null);
