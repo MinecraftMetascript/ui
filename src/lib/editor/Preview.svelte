@@ -36,12 +36,13 @@
 				<div class="w-full flex-1">
 					<DeepslateRendererOffloaded />
 				</div>
+			{:else}
+				<div
+					{@attach preview(previewContent)}
+					class="w-full overflow-y-auto text-xs"
+					class:bottom-0={previewSymbol}
+				></div>
 			{/if}
-			<!-- <div
-				{@attach preview(previewContent)}
-				class="w-full overflow-y-auto text-xs"
-				class:bottom-0={previewSymbol}
-			></div> -->
 		</div>
 	{/if}
 </div>
