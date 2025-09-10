@@ -2,8 +2,7 @@ import * as deepslate from 'deepslate';
 import { parse } from 'valibot';
 import { DeepslateRenderWorkerMessageSchema, type Point } from './proto';
 import { viridis } from './viridis';
-import * as mcdoc from '@spyglassmc/mcdoc';
-import { pixelToCoordinate } from './lib';
+import { coordinateToPixel, pixelToCoordinate } from './lib';
 
 declare var self: DedicatedWorkerGlobalScope;
 export {}; // Make it a module if not already one
@@ -13,16 +12,28 @@ let ctx: OffscreenCanvasRenderingContext2D;
 let seed: [bigint, bigint];
 let random: deepslate.Random;
 let updateFn: (value: object) => void;
-let pointValFn: (point: Point) => number;
-let pointValLabel: string = '';
+
+let pointValFn: ((point: Point) => number) | undefined;
+let memo: Map<[number, number], number> = new Map();
+const getVal = (p: Point): number | null => {
+	if (!pointValFn) return null;
+	if (memo.has([p.x, p.y])) {
+		return memo.get([p.x, p.y])!;
+	}
+	const res = pointValFn(p);
+	memo.set([p.x, p.y], res);
+	return res;
+};
 
 let value: object;
+let pointValLabel: string = '';
 
 // View Configuration
 let scale = 32; // 32 pixels -> 1 block
 let origin = { x: 0, y: 0 };
 let worldHeight: number;
 let minY: number;
+let markerPosition: Point | null = null;
 
 const reseed = () => {
 	seed = [BigInt(Math.floor(performance.now())), BigInt(Math.floor(performance.timeOrigin))] as [
@@ -36,7 +47,7 @@ const reset = () => {
 	random = new deepslate.XoroshiroRandom(seed);
 };
 
-const drawAtCoords = (fn: (p: Point) => number, worldBounded = false) => {
+const drawAtCoords = (worldBounded = false) => {
 	// TODO: We are doing a bit of overdraw here to make sure that we cover the whole canvas -- might want to fix that
 	const maxY = minY + worldHeight;
 	const yInBounds = (y: number) => {
@@ -57,7 +68,8 @@ const drawAtCoords = (fn: (p: Point) => number, worldBounded = false) => {
 				);
 
 				if (yInBounds(coord.y)) {
-					const value = fn(coord);
+					const value = getVal(coord);
+					if (value === null) continue;
 					ctx.fillStyle = viridis(value);
 					ctx.fillRect(xPixel, yPixel, scale, scale);
 					continue;
@@ -83,21 +95,6 @@ const drawAtCoords = (fn: (p: Point) => number, worldBounded = false) => {
 	});
 };
 
-const d = {
-	get width() {
-		return Math.floor(canvas.width / scale);
-	},
-	get height() {
-		return Math.floor(canvas.height / scale);
-	},
-	coordAtPixel(pixel: Point): Point {
-		return {
-			x: Math.floor(pixel.x / scale),
-			y: Math.floor(pixel.y / scale)
-		};
-	}
-};
-
 const updateContext = (): boolean => {
 	const c = canvas.getContext('2d');
 	if (!c) return false;
@@ -120,9 +117,6 @@ const main = (e: MessageEvent) => {
 		case 'init': {
 			canvas = message.canvas;
 			updateContext();
-			// fetchData().catch(() => {
-			// 	console.error('Failed to load mcdoc data');
-			// });
 			break;
 		}
 		case 'injest::noise': {
@@ -133,6 +127,7 @@ const main = (e: MessageEvent) => {
 			break;
 		}
 		case 'update::preview': {
+			memo = new Map();
 			const { type } = message;
 			if (type in previews) {
 				updateFn = previews[type as keyof typeof previews];
@@ -159,17 +154,39 @@ const main = (e: MessageEvent) => {
 				? self.postMessage({
 						kind: 'response::value_at_point',
 						point: message.point,
-						value: pointValFn(message.point) ?? null,
+						value: getVal(message.point) ?? null,
 						label: pointValLabel
 					})
 				: null;
 			return;
+		}
+
+		case 'update::marker_pos': {
+			markerPosition = message.pos;
+			break;
 		}
 	}
 
 	if (ctx) {
 		reset(); // Ensure we end up with a steady random structure unless explicitly reset
 		updateFn?.(value);
+
+		if (markerPosition) {
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					if (!markerPosition) return;
+					ctx.fillStyle = 'rgb(255,0,0)';
+					const pos = coordinateToPixel(
+						markerPosition,
+						origin,
+						{ w: canvas.width, h: canvas.height },
+						scale
+					);
+					console.log(pos.x % scale, pos.y % scale);
+					ctx.fillRect(pos.x, pos.y, scale, scale);
+				});
+			});
+		}
 	}
 };
 
@@ -184,7 +201,7 @@ const previews = {
 			return res;
 		};
 		pointValLabel = 'Value';
-		drawAtCoords(pointValFn);
+		drawAtCoords();
 	},
 	DensityFunction: (value: object) => {
 		let fn = deepslate.DensityFunction.fromJson(value);
@@ -197,6 +214,6 @@ const previews = {
 			return res;
 		};
 		pointValLabel = 'Density';
-		drawAtCoords(pointValFn, true);
+		drawAtCoords(true);
 	}
 };

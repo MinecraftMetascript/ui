@@ -6,23 +6,31 @@
 
 	const editor = useEditorContext();
 	const project = editor.project;
+
+	let selectedPath = $derived.by(() => {
+		if (!editor.selectedPreview) return undefined;
+		const out = [];
+		out.push(editor.selectedPreview.source);
+		out.push(...editor.selectedPreview.path);
+		return out;
+	});
 </script>
 
 <section class="w-full">
-	<TreeView.Group>
+	<TreeView.Group name="file">
 		{#snippet label()}
-			<h2 class="font-bold uppercase">Project Files</h2>
+			<h2 class="font-bold uppercase">Files</h2>
 		{/snippet}
 		{#if project.fs?.isDir}
-			{@render dir(project.fs, [])}
+			{@render dir(project.fs, ['wasm'])}
 		{/if}
 	</TreeView.Group>
 </section>
 <section class="w-full">
 	{#if project.symbols}
-		<TreeView.Group>
+		<TreeView.Group name="symbol">
 			{#snippet label()}
-				<h2 class="font-bold uppercase">Project Symbols</h2>
+				<h2 class="font-bold uppercase">Symbols</h2>
 			{/snippet}
 			{#each Object.entries(groupBy(Object.entries(project.symbols), ([name]) => name.split(':')[0])) as [namespace, nsSymbols]}
 				<TreeView.Group>
@@ -33,8 +41,10 @@
 						<TreeView.Group label={type}>
 							{#each symbols as [name, symbol]}
 								<TreeView.Item
-									onclick={() =>
-										(editor.selectedPreview = { source: 'symbol', path: [name] })}
+									{selectedPath}
+									onclick={() => {
+										editor.selectedPreview = { source: 'symbol', path: [name] };
+									}}
 									label={symbol.ref}
 								/>
 							{/each}
@@ -47,14 +57,17 @@
 </section>
 {#snippet f(fs: FileTreeLike & { isDir: false }, path: string[])}
 	<TreeView.Item
+		{selectedPath}
 		label={fs.name}
-		onclick={() => (editor.selectedPreview = { path, source: 'file' })}
+		onclick={() => {
+			editor.selectedPreview = { path, source: 'file' };
+		}}
 	/>
 {/snippet}
 
 <!-- TODO: This will be it's own component -->
 {#snippet dir(fs: FileTreeLike & { isDir: true }, path: string[])}
-	<TreeView.Group label={fs.name}>
+	<TreeView.Group label={fs.name} name={fs.name}>
 		{#each Object.entries(fs?.children ?? {}) as [name, child]}
 			<div>
 				{#if child?.isDir}

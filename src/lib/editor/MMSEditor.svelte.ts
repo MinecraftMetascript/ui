@@ -12,27 +12,32 @@ const GetSymbolPreviewContent = ({ project, selectedPreview }: MMSEditor) => {
 	if (!symbol) {
 		return null;
 	}
-
-	const sourceFile = project.source[symbol.contentLocation.Filename] ?? '';
-	return (
-		JSON.stringify(
-			{
-				compiled: symbol.value,
-				source: sourceFile.substring(
-					symbol.contentLocation.StartIdx,
-					symbol.contentLocation.StopIdx + 1
-				)
-			},
-			null,
-			2
-		) ?? null
-	);
+	return JSON.stringify(symbol.value, null, 2) ?? null;
 };
 
 class MMSEditor {
 	readonly project: MMSProject;
 
-	selectedPreview: PreviewSelection | null = $state(null);
+	private _selectedPreview: PreviewSelection | null = $state(
+		(() => {
+			if (typeof window !== 'undefined') {
+				const data = localStorage.getItem('MMS:SelectedPreview');
+				if (data) {
+					return JSON.parse(data);
+				}
+			}
+			return null;
+		})()
+	);
+	get selectedPreview() {
+		return this._selectedPreview;
+	}
+	set selectedPreview(value: PreviewSelection | null) {
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('MMS:SelectedPreview', JSON.stringify(value));
+		}
+		this._selectedPreview = value;
+	}
 
 	get previewSymbol() {
 		if (this.selectedPreview?.source !== 'symbol') return null;
@@ -44,7 +49,8 @@ class MMSEditor {
 	get previewContent() {
 		if (!this.selectedPreview) return null;
 		if (this.selectedPreview.source === 'symbol') return GetSymbolPreviewContent(this);
-		const target = this.project.getFile(this.selectedPreview.path);
+		const target = this.project.getFile(this.selectedPreview.path.slice(1));
+		console.log(this.selectedPreview.path, target, this.project.fs)
 		if (!target || target.isDir) return null; // not a valid FILE
 		return target.content;
 	}

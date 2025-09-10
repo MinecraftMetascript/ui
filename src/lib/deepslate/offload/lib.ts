@@ -7,7 +7,6 @@ export const pixelToCoordinate = (
 	scale: number
 ): Point => {
 	const out = { ...pixel };
-    debugger
 	// Translate to coordinate grid from pixel grid
 	const pX = Math.floor(out.x / scale);
 	const pY = Math.floor(out.y / scale);
@@ -25,6 +24,30 @@ export const pixelToCoordinate = (
 	out.y -= Math.floor(cHeight / 2);
 
 	// Account for centering ?
+
+	return out;
+};
+
+export const coordinateToPixel = (
+	cood: Point,
+	offset: Point,
+	canvasSize: { w: number; h: number },
+	scale: number
+): Point => {
+	const out = { ...cood };
+	// Apply offset
+	out.x += offset.x;
+	out.y += offset.y;
+
+	// Translate to pixel grid from coordinate grid
+	out.x = out.x * scale;
+	out.y = canvasSize.h - out.y * scale;
+
+	out.x += Math.floor(canvasSize.w / 2);
+	out.y -= Math.floor(canvasSize.h / 2);
+
+	out.x -= out.x % scale;
+	out.y -= out.y % scale;
 
 	return out;
 };

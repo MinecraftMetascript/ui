@@ -12,7 +12,7 @@
 		type Point
 	} from './proto';
 	import { parse } from 'valibot';
-	import { debounce } from 'es-toolkit';
+	import { debounce, throttle } from 'es-toolkit';
 	import { useEditorContext } from '../../editor/MMSEditor.svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import {
@@ -29,11 +29,16 @@
 
 	const editor = useEditorContext();
 
-	const ds: Action<HTMLCanvasElement> = (canvas) => {
+	const ds: Action<HTMLCanvasElement> = (canvas: HTMLCanvasElement) => {
 		const offscreen = canvas.transferControlToOffscreen();
 		const worker = new DeepslateRenderWorker({ name: 'Deepslate' });
 		const send = (m: DeepslateRenderWorkerMessage, opts?: Parameters<Worker['postMessage']>[1]) =>
 			worker.postMessage(parse(DeepslateRenderWorkerMessageSchema, m), opts);
+		let parent: HTMLElement = canvas;
+		while (parent !== document.body && !('previewRoot' in parent.dataset)) {
+			console.log(parent.dataset);
+			parent = parent.parentElement!;
+		}
 
 		offscreen.height = canvas.clientHeight;
 		offscreen.width = canvas.clientWidth;
@@ -47,15 +52,16 @@
 
 		const resizeObserver = new ResizeObserver(
 			debounce(() => {
-				console.log('Resize detected');
+				const box = parent.getBoundingClientRect();
+
 				send({
 					kind: 'update::canvas_dimensions',
-					x: canvas.clientWidth,
-					y: canvas.clientHeight
+					x: Math.floor(box.width),
+					y: Math.floor(box.height)
 				});
-			}, 250)
+			}, 200)
 		);
-		resizeObserver.observe(canvas);
+		resizeObserver.observe(parent, { box: 'device-pixel-content-box' });
 
 		$effect(() => {
 			if (editor.previewSymbol) {
@@ -96,14 +102,24 @@
 			});
 		});
 
-		const fetchValue = debounce(() => {
+		$effect(() => {
+			send({
+				kind: 'update::marker_pos',
+				pos: mouseLocked ? mousePos : null
+			});
+		});
+
+		const fetchValue = () => {
 			send({
 				kind: 'request::value_at_point',
 				point: mousePos!
 			});
-		}, 25);
+		};
 		$effect(() => {
-			if (mousePos) fetchValue();
+			// We keep the editor.previewSymbol dependency
+			// so that the value will refresh when the symbol is modified,
+			//  without needing to unlock the mouse
+			if (mousePos && editor.previewSymbol) fetchValue();
 		});
 
 		worker.addEventListener('message', (e) => {
@@ -119,12 +135,12 @@
 
 		return {
 			destroy() {
-				resizeObserver.unobserve(canvas);
+				resizeObserver.unobserve(parent);
 			}
 		};
 	};
 
-	let scale = $state(8);
+	let scale = $state(64);
 	let originX = $state(0);
 	let originY = $state(0);
 	let worldHeight = $state(256);
@@ -157,10 +173,32 @@
 			scale
 		);
 	};
+
+	let prevMouse = $state<{ x: number; y: number } | null>(null);
+	const drag = throttle((e: MouseEvent | PointerEvent) => {
+		if (prevMouse) {
+			const xDiff = (prevMouse?.x ?? 0) - e.pageX;
+			const yDiff = e.pageY - (prevMouse?.y ?? 0);
+			originX += Math.round(xDiff / scale);
+			originY += Math.round(yDiff / scale);
+		}
+		prevMouse = { x: e.pageX, y: e.pageY };
+	}, 20);
+
+	const dragStart = () => {
+		prevMouse = null;
+		window.addEventListener('mousemove', drag);
+		window.addEventListener('mouseup', dragEnd);
+	};
+	const dragEnd = () => {
+		window.removeEventListener('mousemove', drag);
+		window.removeEventListener('mouseup', dragEnd);
+		prevMouse = null;
+	};
 </script>
 
 {#if editor.previewSymbol}
-	<div class="relative h-full w-full">
+	<div class="relative h-full max-h-full w-full overflow-y-hidden" data-preview-root>
 		{#if mousePos}
 			<div
 				class="absolute top-2 right-2 flex items-center gap-2 bg-slate-600/50 px-2 py-1 font-mono text-xs font-bold text-slate-50"
@@ -203,6 +241,9 @@
 			>
 				<Icon src={Minus} class="w-6" />
 			</button>
+		</div>
+		<div class="absolute right-2 bottom-2 bg-slate-600/50 px-1 py-0.5 text-[0.5rem] text-slate-50">
+			Preview powered by <a href="https://github.com/misode/deepslate" target="_blank">Deepslate</a>
 		</div>
 
 		<div class="absolute bottom-2 left-2 flex flex-col items-start gap-2">
@@ -248,10 +289,13 @@
 		</div>
 
 		<canvas
-			class="h-full w-full"
 			use:ds
 			onmousemove={updateMousePos}
 			ondblclick={toggleMouseLock}
-		></canvas>
+			onmousedown={dragStart}
+			class="cursor-grab"
+			class:cursor-grabbing={prevMouse}
+		>
+		</canvas>
 	</div>
 {/if}

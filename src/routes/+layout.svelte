@@ -15,8 +15,12 @@
 			<br />
 			This tool is <strong>NOT</strong> production ready.
 		</p>
-		<a href="https://github.com/minecraftmetascript/mms" target="_blank">
-			<button class="absolute top-2 right-2">Github</button>
+		<a
+			href="https://github.com/minecraftmetascript/mms"
+			target="_blank"
+			class="absolute top-2 right-2 font-mono text-sm uppercase hover:underline"
+		>
+			Github
 		</a>
 	</header>
 	{@render children?.()}

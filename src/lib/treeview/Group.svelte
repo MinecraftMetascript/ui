@@ -5,19 +5,22 @@
 
 	let {
 		label,
-		children
+		children,
+		name,
+		root,
 	}: {
 		label: string | Snippet;
-		children: Snippet;
+		children: Snippet<[string[]]>;
+		name?: string;
+		root?: string[];
 	} = $props();
 
-	const level = treeViewLevel();
+	const { level, path: childPath } = treeViewLevel(name, root);
 
 	let visible = $state(true);
 </script>
-
 <button
-	class="w-full overflow-x-hidden pr-2 text-left text-ellipsis hover:bg-black/25 flex gap-2 items-center"
+	class="flex w-full items-center gap-2 overflow-x-hidden pr-2 text-left text-ellipsis hover:bg-black/25"
 	style:padding-left="{4 + level * 8}px"
 	onclick={() => (visible = !visible)}
 >
@@ -31,6 +34,6 @@
 
 {#if visible}
 	<div transition:slide>
-		{@render children()}
+		{@render children(childPath)}
 	</div>
 {/if}

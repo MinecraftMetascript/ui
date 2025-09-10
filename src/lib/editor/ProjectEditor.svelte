@@ -1,96 +1,93 @@
 <script lang="ts">
 	import Mirror from '$lib/editor/Mirror.svelte';
 	import PreviewPicker from '$lib/editor/PreviewPicker.svelte';
-	import { debounce } from 'es-toolkit';
+	import { onMount } from 'svelte';
 	import { createEditorContext } from './MMSEditor.svelte';
+	import { Pane, Splitpanes } from 'svelte-splitpanes';
+	import * as v from 'valibot';
+	import DeepslateRendererOffloaded, {
+		SupportedPreviewTypes
+	} from '../deepslate/offload/DeepslateRendererOffloaded.svelte';
 	import Preview from './Preview.svelte';
-	import { Icon } from '@steeze-ui/svelte-icon';
-	import { ChevronLeft, Dots, X } from '@steeze-ui/tabler-icons';
-	import type { Action } from 'svelte/action';
-	import type { Snippet } from 'svelte';
-	import DeepslateRendererOffloaded from '../deepslate/offload/DeepslateRendererOffloaded.svelte';
+
 	const editor = createEditorContext();
 
-	const dragColumns: Action<HTMLElement, {}> = (node) => {
-		let handles = node.querySelectorAll<HTMLButtonElement>('button[data-handle]');
-		for (const handle of handles) {
-			const targetEl = handle.previousElementSibling as HTMLElement | null;
-			if (!targetEl) {
-				if (handle) handle.disabled = true;
-				continue;
-			}
-			if (!handle) {
-				continue;
-			}
-			let offset = $state(0);
-			let initialPosition = $state<{ x: number }>();
-			let initialWidth = $state(0);
-			handle.addEventListener('mousedown', (e: MouseEvent) => {
-				initialPosition = { x: e.clientX };
-				initialWidth = targetEl.getBoundingClientRect().width;
-
-				window.addEventListener('mousemove', onMove);
-			});
-			const stop = () => {
-				window.removeEventListener('mousemove', onMove);
-			};
-			window.addEventListener('mouseup', stop);
-
-			const onMove = debounce((e: MouseEvent) => {
-				if (!initialPosition) return;
-
-				offset = initialPosition.x - e.clientX;
-				targetEl.style.width = `${initialWidth - offset}px`;
-			}, 5);
-
-			handle.addEventListener('collapse', () => {
-				targetEl.style.width = `0`;
-			});
-			handle.addEventListener('open', () => {
-				targetEl.style.width = `${initialWidth - offset}px`;
-			});
+	const sizingSchema = v.object({
+		picker: v.number(),
+		center: v.number(),
+		preview: v.number(),
+		mirror: v.number(),
+		textPreview: v.number()
+	});
+	let sizes = $state<v.InferOutput<typeof sizingSchema>>({
+		picker: 15,
+		center: 60,
+		preview: 25,
+		mirror: 80,
+		textPreview: 20
+	});
+	onMount(() => {
+		const s = localStorage.getItem('MMS:EditorPaneSizes');
+		if (s) {
+			try {
+				sizes = v.parse(sizingSchema, JSON.parse(s));
+			} catch {}
 		}
-		return {
-			destroy() {
-				stop();
-			}
-		};
-	};
+	});
+
+	$effect(() => {
+		localStorage.setItem('MMS:EditorPaneSizes', JSON.stringify(sizes));
+	});
+
+	let showDeepslate = $derived(
+		editor.previewSymbol && SupportedPreviewTypes.includes(editor.previewSymbol.type)
+	);
 </script>
 
-{#snippet handle()}
-	<button
-		class="disabled:cursor-default group flex h-full w-min flex-col items-center justify-center gap-4 disabled:text-slate-500 cursor-col-resize"
-		data-handle
-	>
-		<hr class="flex-1 border-l border-dashed border-transparent group-hover:border-slate-700" />
-		<Icon src={Dots} class="h-4 w-4 rotate-90" />
-		<hr class="flex-1 border-l border-dashed border-transparent group-hover:border-slate-700" />
-	</button>
-{/snippet}
 {#await editor.init()}
 	Initializing your MMS Project...
 {:then _}
-	<div
-		class="grid h-full min-h-0 w-full max-w-full"
-		use:dragColumns={{ handle }}
-		style:grid-template-columns="min-content min-content min-content min-content auto"
+	<Splitpanes
+		dblClickSplitter={false}
+		on:resized={(e) => {
+			if (showDeepslate) {
+				// The preview panel is popped out -- we can update the size
+				sizes.center = e.detail[1].size;
+				sizes.preview = e.detail[2].size;
+			}
+			sizes.picker = e.detail[0].size; // we can always update the picker
+		}}
 	>
-		<aside
-			class="flex h-full min-h-0 w-full flex-col gap-4 overflow-x-hidden bg-slate-100 px-2 py-1 font-mono text-sm text-ellipsis"
-			data-col-name="sidebar"
-		>
-			<PreviewPicker />
-		</aside>
-		{@render handle()}
-		<div class="min-h-0 w-full overflow-x-hidden">
-			<Mirror />
-		</div>
-		{@render handle()}
-		<div class="flex min-h-0 w-full flex-col overflow-x-hidden">
-			<!-- <DeepslateRendererOffloaded /> -->
-			<Preview />
-		</div>
+		<Pane size={sizes.picker}>
+			<aside
+				class="flex h-full min-h-0 w-full flex-col gap-4 overflow-x-hidden bg-slate-100 px-2 py-1 font-mono text-sm text-ellipsis"
+			>
+				<PreviewPicker />
+			</aside>
+		</Pane>
+		<Pane size={showDeepslate ? sizes.center : sizes.preview + sizes.center}>
+			<Splitpanes
+				horizontal
+				on:resized={(e) => {
+					sizes = { ...sizes, mirror: e.detail[0].size, textPreview: e.detail[1].size };
+				}}
+			>
+				<Pane size={sizes.mirror}>
+					<div class="min-h-0 w-full overflow-x-hidden">
+						<Mirror />
+					</div>
+				</Pane>
+				<Pane size={sizes.textPreview}>
+					<Preview />
+				</Pane>
+			</Splitpanes>
+		</Pane>
+		<Pane class="h-full" size={showDeepslate ? sizes.preview : 0}>
+			<div class="flex h-full w-full flex-col overflow-x-hidden">
+				<DeepslateRendererOffloaded />
+				<!-- <Preview /> -->
+			</div>
+		</Pane>
 		<!-- TODO: Implement text preview panel here -->
-	</div>
+	</Splitpanes>
 {/await}

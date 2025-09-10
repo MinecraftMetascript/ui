@@ -44,6 +44,11 @@ export const ResponseValueAtPoint = v.object({
 	label: v.string()
 });
 
+export const UpdateMarkerPosSchema = v.object({
+	kind: v.literal('update::marker_pos'),
+	pos: v.nullable(PointSchema)
+});
+
 export const InjestNoiseMessageSchema = v.object({
 	kind: v.literal('injest::noise'),
 	ref: v.object({ namespace: v.string(), name: v.string() }),
@@ -57,6 +62,7 @@ export const DeepslateRenderWorkerMessageSchema = v.union([
 	UpdateViewMessageSchema,
 	InjestNoiseMessageSchema,
 	RequestValueAtPoint,
-	ResponseValueAtPoint
+	ResponseValueAtPoint,
+	UpdateMarkerPosSchema
 ]);
 export type DeepslateRenderWorkerMessage = v.InferOutput<typeof DeepslateRenderWorkerMessageSchema>;
