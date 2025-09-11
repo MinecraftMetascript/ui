@@ -13,7 +13,7 @@
 	} from './proto';
 	import { parse } from 'valibot';
 	import { debounce, throttle } from 'es-toolkit';
-	import { useEditorContext } from '../../editor/MMSEditor.svelte';
+	import { useEditorContext } from '../editor/MMSEditor.svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import {
 		ArrowDown,
@@ -36,7 +36,6 @@
 			worker.postMessage(parse(DeepslateRenderWorkerMessageSchema, m), opts);
 		let parent: HTMLElement = canvas;
 		while (parent !== document.body && !('previewRoot' in parent.dataset)) {
-			console.log(parent.dataset);
 			parent = parent.parentElement!;
 		}
 
@@ -140,7 +139,15 @@
 		};
 	};
 
-	let scale = $state(64);
+	let scale = $state(8);
+
+	const updateScale = throttle((delta: number) => {
+		let next = scale;
+		next += delta;
+		next -= next % 2;
+		if (next < 2) next = 1;
+		scale = next;
+	}, 50);
 	let originX = $state(0);
 	let originY = $state(0);
 	let worldHeight = $state(256);
@@ -223,21 +230,13 @@
 			</span>
 			<button
 				class="bg-slate-600/50 text-slate-50 hover:bg-slate-600"
-				onclick={(e) => (e.shiftKey ? (scale += 6) : (scale += 2))}
+				onclick={(e) => updateScale(e.shiftKey ? 6 : 2)}
 			>
 				<Icon src={Plus} class="w-6" />
 			</button>
 			<button
 				class="bg-slate-600/50 text-slate-50 hover:bg-slate-600"
-				onclick={(e) => {
-					if (e.shiftKey) {
-						if (scale > 12) scale -= 6;
-						else if (scale > 6) scale = 6;
-						else scale = 2;
-					} else {
-						if (scale > 2) scale -= 2;
-					}
-				}}
+				onclick={(e) => updateScale(e.shiftKey ? -6 : -2)}
 			>
 				<Icon src={Minus} class="w-6" />
 			</button>
@@ -290,6 +289,12 @@
 
 		<canvas
 			use:ds
+			onmousewheel={(e: WheelEvent) => {
+				e.preventDefault();
+
+				if (e.deltaY > 0) updateScale(-2);
+				else updateScale(2);
+			}}
 			onmousemove={updateMousePos}
 			ondblclick={toggleMouseLock}
 			onmousedown={dragStart}

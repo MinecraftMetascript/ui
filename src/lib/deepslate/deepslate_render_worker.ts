@@ -173,18 +173,15 @@ const main = (e: MessageEvent) => {
 
 		if (markerPosition) {
 			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					if (!markerPosition) return;
-					ctx.fillStyle = 'rgb(255,0,0)';
-					const pos = coordinateToPixel(
-						markerPosition,
-						origin,
-						{ w: canvas.width, h: canvas.height },
-						scale
-					);
-					console.log(pos.x % scale, pos.y % scale);
-					ctx.fillRect(pos.x, pos.y, scale, scale);
-				});
+				if (!markerPosition) return;
+				ctx.fillStyle = 'rgb(255,0,0)';
+				const pos = coordinateToPixel(
+					markerPosition,
+					origin,
+					{ w: canvas.width, h: canvas.height },
+					scale
+				);
+				ctx.fillRect(pos.x, pos.y, scale, scale);
 			});
 		}
 	}

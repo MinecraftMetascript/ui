@@ -46,7 +46,6 @@
 			if (symbolUnselection) {
 				decorations = decorations.update({
 					filter(a, b, v) {
-						console.log(v.spec.kind);
 						return v.spec.kind !== 'MMS::SelectedSymbol';
 					}
 				});

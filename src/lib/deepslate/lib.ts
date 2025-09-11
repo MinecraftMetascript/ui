@@ -29,15 +29,16 @@ export const pixelToCoordinate = (
 };
 
 export const coordinateToPixel = (
-	cood: Point,
+	coord: Point,
 	offset: Point,
 	canvasSize: { w: number; h: number },
 	scale: number
 ): Point => {
-	const out = { ...cood };
+	const out = { ...coord };
 	// Apply offset
-	out.x += offset.x;
-	out.y += offset.y;
+	out.x -= offset.x;
+	out.y -= offset.y;
+
 
 	// Translate to pixel grid from coordinate grid
 	out.x = out.x * scale;

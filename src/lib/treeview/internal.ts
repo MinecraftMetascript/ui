@@ -9,7 +9,6 @@ export const treeViewLevel = (name?: string, root?: string[]): TreeViewLevelCtx 
 	if (prev) nextPath.push(...prev.path);
 	if (root) nextPath.push(...root);
 	if (name) nextPath.push(name);
-	if (root) console.log(nextPath)
 	const next = {
 		path: nextPath,
 		level: (prev?.level ?? 0) + 1

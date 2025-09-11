@@ -7,8 +7,10 @@
 	import * as v from 'valibot';
 	import DeepslateRendererOffloaded, {
 		SupportedPreviewTypes
-	} from '../deepslate/offload/DeepslateRendererOffloaded.svelte';
+	} from '../deepslate/DeepslateRendererOffloaded.svelte';
 	import Preview from './Preview.svelte';
+	import { Icon } from '@steeze-ui/svelte-icon';
+	import { Download, WorldDownload } from '@steeze-ui/tabler-icons';
 
 	const editor = createEditorContext();
 
@@ -62,6 +64,7 @@
 			<aside
 				class="flex h-full min-h-0 w-full flex-col gap-4 overflow-x-hidden bg-slate-100 px-2 py-1 font-mono text-sm text-ellipsis"
 			>
+				<button class="flex gap-2 items-center" onclick={() => editor.project.download()}><Icon src={Download} class="w-4"/> Export</button>
 				<PreviewPicker />
 			</aside>
 		</Pane>

@@ -50,6 +50,7 @@
 		"@steeze-ui/tabler-icons": "^3.3.1",
 		"@sveltejs/adapter-static": "^3.0.9",
 		"@types/golang-wasm-exec": "^1.15.2",
+		"@zip.js/zip.js": "^2.8.2",
 		"codemirror": "^6.0.2",
 		"deepslate": "^0.24.0",
 		"es-toolkit": "^1.39.10",

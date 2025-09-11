@@ -1,7 +1,7 @@
 import { Go, type FileTreeLike, type MmsSymbol } from '@minecraftmetascript/mms-wasm';
 import MMSWasm from '@minecraftmetascript/mms-wasm/dist/main.wasm?init';
 import * as deepslate from 'deepslate';
-
+import * as zip from '@zip.js/zip.js';
 export class MMSFile {
 	private _content: string;
 	get content() {
@@ -36,6 +36,30 @@ export class MMSFile {
 
 export class MMSProject {
 	private readonly goInstance: Go;
+	async download() {
+		const zipFileWriter = new zip.BlobWriter();
+		const zipWriter = new zip.ZipWriter(zipFileWriter);
+		const addLeaves = (root: FileTreeLike, path: string[] = []) => {
+			if (root.isDir) {
+				for (const [, child] of Object.entries(root.children ?? {}))
+					addLeaves(child, [...path, root.name]);
+			} else {
+				zipWriter.add([...path, root.name].join('/'), new zip.TextReader(JSON.stringify(root)));
+			}
+		};
+		if (!this._fs) return;
+		addLeaves(this._fs);
+		await zipWriter.close();
+
+		const zipFileBlob = await zipFileWriter.getData();
+		const url = URL.createObjectURL(zipFileBlob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'project.zip';
+		a.click();
+		URL.revokeObjectURL(url);
+		a.remove();
+	}
 
 	async init(signal?: AbortSignal) {
 		const wasmInstance = await MMSWasm(this.goInstance.importObject);
@@ -45,7 +69,7 @@ export class MMSProject {
 		signal?.addEventListener('abort', () => {
 			console.log('Abort Signal Received. Quitting MMS');
 			this.goInstance.exit(1);
-		});	
+		});
 	}
 
 	constructor() {

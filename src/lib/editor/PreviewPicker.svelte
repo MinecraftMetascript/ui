@@ -22,7 +22,7 @@
 			<h2 class="font-bold uppercase">Files</h2>
 		{/snippet}
 		{#if project.fs?.isDir}
-			{@render dir(project.fs, ['wasm'])}
+			{@render dir(project.fs, [])}
 		{/if}
 	</TreeView.Group>
 </section>

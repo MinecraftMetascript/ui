@@ -50,7 +50,6 @@ class MMSEditor {
 		if (!this.selectedPreview) return null;
 		if (this.selectedPreview.source === 'symbol') return GetSymbolPreviewContent(this);
 		const target = this.project.getFile(this.selectedPreview.path.slice(1));
-		console.log(this.selectedPreview.path, target, this.project.fs)
 		if (!target || target.isDir) return null; // not a valid FILE
 		return target.content;
 	}
