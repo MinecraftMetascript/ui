@@ -26,7 +26,7 @@
 		Plus
 	} from '@steeze-ui/tabler-icons';
 	import { pixelToCoordinate } from './lib';
-	import { assets } from '$app/paths';
+	import { base } from '$app/paths';
 
 	const editor = useEditorContext();
 
@@ -46,7 +46,7 @@
 			{
 				kind: 'init',
 				canvas: offscreen,
-				assetPath: assets
+				assetPath: base
 			},
 			{ transfer: [offscreen] }
 		);
