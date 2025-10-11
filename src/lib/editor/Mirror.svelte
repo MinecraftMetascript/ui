@@ -124,7 +124,6 @@
 
 		lspClient.connect({
 			send(m) {
-				const msg = JSON.parse(m);
 				editor.project.lspWrite(m);
 			},
 			subscribe(h) {

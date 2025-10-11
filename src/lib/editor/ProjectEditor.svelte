@@ -2,7 +2,7 @@
 	import Mirror from '$lib/editor/Mirror.svelte';
 	import PreviewPicker from '$lib/editor/PreviewPicker.svelte';
 	import { onMount } from 'svelte';
-	import { createEditorContext } from './MMSEditor.svelte';
+	import { useEditorContext } from './MMSEditor.svelte';
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
 	import * as v from 'valibot';
 	import DeepslateRendererOffloaded, {
@@ -12,8 +12,7 @@
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { Download } from '@steeze-ui/tabler-icons';
 
-	const editor = createEditorContext();
-
+	const editor = useEditorContext();
 	const sizingSchema = v.object({
 		picker: v.number(),
 		center: v.number(),
@@ -64,7 +63,9 @@
 			<aside
 				class="flex h-full min-h-0 w-full flex-col gap-4 overflow-x-hidden bg-slate-100 px-2 py-1 font-mono text-sm text-ellipsis"
 			>
-				<button class="flex gap-2 items-center" onclick={() => editor.project.download()}><Icon src={Download} class="w-4"/> Export</button>
+				<button class="flex items-center gap-2" onclick={() => editor.project.download()}
+					><Icon src={Download} class="w-4" /> Export</button
+				>
 				<PreviewPicker />
 			</aside>
 		</Pane>
@@ -76,7 +77,7 @@
 				}}
 			>
 				<Pane size={sizes.mirror}>
-					<div class="min-h-0 max-h-full w-full overflow-x-hidden">
+					<div class="max-h-full min-h-0 w-full overflow-x-hidden">
 						<Mirror />
 					</div>
 				</Pane>
