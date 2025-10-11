@@ -10,7 +10,8 @@ export const CanvasInitMessageSchema = v.object({
 	canvas: v.custom<OffscreenCanvas>((i) => {
 		if (i instanceof OffscreenCanvas) return true;
 		return false;
-	})
+	}),
+	assetPath: v.string()
 });
 
 export const UpdatePreviewMessageSchema = v.object({

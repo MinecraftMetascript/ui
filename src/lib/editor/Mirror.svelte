@@ -12,7 +12,7 @@
 		serverDiagnostics,
 		signatureHelp
 	} from '@codemirror/lsp-client';
-	import { keymap, ViewPlugin, ViewUpdate } from '@codemirror/view';
+	import { keymap, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 	import { StateEffect, StateField } from '@codemirror/state';
 	import type { Action } from 'svelte/action';
 	import { presets } from './presets';

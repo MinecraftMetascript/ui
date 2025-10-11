@@ -3,7 +3,6 @@ import { parse } from 'valibot';
 import { DeepslateRenderWorkerMessageSchema, type Point } from '../proto';
 import { viridis } from '../viridis';
 import { coordinateToPixel, pixelToCoordinate } from '../lib';
-import { asset } from '$app/paths';
 import { loadAssets } from './load_assets';
 
 declare var self: DedicatedWorkerGlobalScope;
@@ -14,6 +13,7 @@ let ctx: OffscreenCanvasRenderingContext2D;
 let seed: [bigint, bigint];
 let random: deepslate.Random;
 let updateFn: (value: object) => void;
+let assetPath: string;
 
 let pointValFn: ((point: Point) => number | string) | undefined;
 // TODO: Memo needs to free up old coordinates after storing some # (maybe 5000?)
@@ -125,8 +125,9 @@ const main = async (e: MessageEvent) => {
 	switch (message.kind) {
 		case 'init': {
 			canvas = message.canvas;
+			assetPath = message.assetPath;
 			updateContext();
-			await loadAssets();
+			await loadAssets(assetPath);
 			break;
 		}
 		case 'injest::noise': {
