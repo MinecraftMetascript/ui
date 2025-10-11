@@ -116,10 +116,6 @@ const getMaybeSerialized = (v: object | string): object => {
 	return v;
 };
 
-const fetchData = async () => {
-	const mcdocData = await fetch('https://raw.githubusercontent.com/SpyglassMC/vanilla-mcdoc');
-};
-
 const main = async (e: MessageEvent) => {
 	const message = parse(DeepslateRenderWorkerMessageSchema, e.data);
 	switch (message.kind) {

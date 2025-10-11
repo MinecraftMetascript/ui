@@ -46,7 +46,6 @@
 		"@codemirror/view": "^6.38.1",
 		"@minecraftmetascript/mms-wasm": "../mms/result/js",
 		"@open-rpc/client-js": "^1.8.1",
-		"@spyglassmc/mcdoc": "^0.3.38",
 		"@steeze-ui/svelte-icon": "^1.6.2",
 		"@steeze-ui/tabler-icons": "^3.3.1",
 		"@sveltejs/adapter-static": "^3.0.9",
