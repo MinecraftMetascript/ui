@@ -91,8 +91,6 @@ export class MMSProject {
 				else message = this.partial;
 			}
 			try {
-				JSON.parse(message);
-				console.log({ message: JSON.parse(message) });
 				this.partial = '';
 				this.lspReaders.forEach((r) => r(message));
 			} catch (e) {

@@ -217,7 +217,6 @@ const previews = {
 			const chunkKey = JSON.stringify(chunkPos);
 
 			if (!chunks.has(chunkKey)) {
-				console.log('Creating fresh chunk!', chunkPos, [...chunks.keys()]);
 				const freshChunk = new deepslate.Chunk(minY, worldHeight, chunkPos);
 				generator.fill(randomState, freshChunk, true);
 				chunks.set(chunkKey, freshChunk);

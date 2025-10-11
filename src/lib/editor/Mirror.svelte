@@ -125,8 +125,6 @@
 		lspClient.connect({
 			send(m) {
 				const msg = JSON.parse(m);
-				console.log(msg.id, msg.method, { msg });
-				if (msg.id === undefined) debugger;
 				editor.project.lspWrite(m);
 			},
 			subscribe(h) {

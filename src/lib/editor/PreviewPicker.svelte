@@ -61,7 +61,6 @@
 		{selectedPath}
 		label={fs.name}
 		onclick={() => {
-			console.log({ path });
 			editor.selectedPreview = { path, source: 'file' };
 		}}
 	/>

@@ -8,9 +8,7 @@
 
 	onMount(() => {
 		if (!help) {
-			console.log('Started getting spec');
 			const r = getMmsSpec();
-			console.log('Got Spec', { r });
 			help = atob(r.toBase64());
 		}
 	});
