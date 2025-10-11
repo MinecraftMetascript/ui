@@ -1,10 +1,19 @@
 <script lang="ts">
 	import { EditorView } from 'codemirror';
 	import { CoreExtensions } from './CoreExtensions';
-	import { LSPClient, LSPPlugin } from '@codemirror/lsp-client';
-	import { ViewPlugin, ViewUpdate } from '@codemirror/view';
+	import {
+		findReferencesKeymap,
+		formatKeymap,
+		hoverTooltips,
+		jumpToDefinitionKeymap,
+		LSPClient,
+		renameKeymap,
+		serverCompletion,
+		serverDiagnostics,
+		signatureHelp
+	} from '@codemirror/lsp-client';
+	import { keymap, ViewPlugin, ViewUpdate } from '@codemirror/view';
 	import { StateEffect, StateField } from '@codemirror/state';
-	import { type Diagnostic, linter } from '@codemirror/lint';
 	import type { Action } from 'svelte/action';
 	import { presets } from './presets';
 	import { useEditorContext } from './MMSEditor.svelte';
@@ -15,6 +24,7 @@
 
 	import { Decoration } from '@codemirror/view';
 	import type { MmsSymbol } from '@minecraftmetascript/mms-wasm';
+	import Help from './Help.svelte';
 	const selectedSymbolMark = Decoration.mark({
 		class: `
 				relative
@@ -34,9 +44,11 @@
 			decorations = decorations.map(transaction.changes); // Adjust positions for document changes
 			const symbolSelections = transaction.effects.findLast((e) => e.is(selectSymbol));
 			if (symbolSelections) {
-				const { nameLocation: name, contentLocation: content } = symbolSelections.value.symbol;
+				const { nameLocation: name, location: content } = symbolSelections.value.symbol;
+				const start = name?.start.index ?? content.start.index;
+				const stop = Math.max(name?.stop.index ?? 0, content.stop.index) + 1;
 				decorations = decorations.update({
-					add: [selectedSymbolMark.range(name.StartIdx, Math.max(name.StopIdx, content.StopIdx) + 1)],
+					add: [selectedSymbolMark.range(start, stop)],
 					filter(a, b, v) {
 						return v.spec.kind !== 'MMS::SelectedSymbol';
 					}
@@ -57,10 +69,7 @@
 	const selectSymbol = StateEffect.define<{ symbol: MmsSymbol }>();
 	const unselectSymbol = StateEffect.define<{}>();
 	$effect(() => {
-		if (
-			editor.previewSymbol &&
-			file.content.length > editor.previewSymbol.contentLocation.StopIdx
-		) {
+		if (editor.previewSymbol && file.content.length > editor.previewSymbol.location.stop.index) {
 			view?.dispatch({
 				effects: [selectSymbol.of({ symbol: editor.previewSymbol })]
 			});
@@ -97,30 +106,38 @@
 
 	let view = $state<EditorView | null>(null);
 	const codemirror: Action = (node: HTMLElement) => {
-		// const lspClient = new LSPClient();
-		// lspClient.connect({
-		// 	send() {
+		const lspClient = new LSPClient({
+			timeout: 10000,
+			extensions: [
+				serverCompletion({ override: true }),
+				hoverTooltips({ hoverTime: 750 }),
+				keymap.of([
+					...formatKeymap,
+					...renameKeymap,
+					...jumpToDefinitionKeymap,
+					...findReferencesKeymap
+				]),
+				signatureHelp(),
+				serverDiagnostics()
+			]
+		});
 
-		// 	},
-		// 	subscribe() {},
-		// 	unsubscribe() {}
-		// });
-
+		lspClient.connect({
+			send(m) {
+				const msg = JSON.parse(m);
+				console.log(msg.id, msg.method, { msg });
+				if (msg.id === undefined) debugger;
+				editor.project.lspWrite(m);
+			},
+			subscribe(h) {
+				editor.project.lspSub(h);
+			},
+			unsubscribe(h) {
+				editor.project.lspUnsub(h);
+			}
+		});
 		view = new EditorView({
 			extensions: [
-				// lspClient.plugin("wasm.mms"),
-				linter(() => {
-					return (
-						file.diagnostics
-							?.map<Diagnostic>((diag) => ({
-								from: diag.where.StartIdx,
-								to: diag.where.StopIdx,
-								severity: diag.severity,
-								message: diag.message
-							}))
-							.sort((a, b) => b.from - a.from) ?? []
-					);
-				}),
 				ViewPlugin.fromClass(
 					class {
 						private flush = debounce((docStr: string) => {
@@ -129,13 +146,15 @@
 						}, 250);
 						update(update: ViewUpdate) {
 							if (update.docChanged) {
+								lspClient.sync();
 								this.flush(update.state.doc.toString());
 							}
 						}
 					}
 				),
 				selectedSymbolField,
-				...CoreExtensions
+				...CoreExtensions,
+				lspClient.plugin('file:///wasm.mms', 'mms')
 			],
 			parent: node
 		});
@@ -143,12 +162,22 @@
 		syncView();
 	};
 	let selectedPreset = $state<null | string>(null);
+
+	let showHelp = $state<boolean>(false);
 </script>
 
-<section class="flex h-full w-full flex-col items-stretch">
-	<header class="flex justify-between px-8 bg-slate-300 py-1">
+<section class="flex h-full min-h-0 w-full flex-col items-stretch">
+	<header class="flex justify-between bg-slate-300 px-8 py-1">
 		<h2 class="text-xl font-bold">Source Editor</h2>
 		<div class="flex items-center gap-4">
+			<button
+				class="px-1 py-0.5 hover:bg-slate-200 active:bg-slate-300 disabled:cursor-default disabled:bg-transparent disabled:text-gray-500"
+				onclick={() => {
+					showHelp = !showHelp;
+				}}
+			>
+				{showHelp ? 'Hide' : 'Show'} Help
+			</button>
 			<select bind:value={selectedPreset} class="border-b border-b-slate-800">
 				<option disabled></option>
 				{#each presets as { label, content }}
@@ -170,5 +199,6 @@
 			>
 		</div>
 	</header>
-	<div class="overflow-y-auto" use:codemirror></div>
+	<div class="min-h-0 flex-1 overflow-y-auto" class:hidden={showHelp} use:codemirror></div>
+	{#if showHelp}<Help />{/if}
 </section>

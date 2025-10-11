@@ -10,7 +10,7 @@
 	} from '../deepslate/DeepslateRendererOffloaded.svelte';
 	import Preview from './Preview.svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
-	import { Download, WorldDownload } from '@steeze-ui/tabler-icons';
+	import { Download } from '@steeze-ui/tabler-icons';
 
 	const editor = createEditorContext();
 
@@ -42,7 +42,7 @@
 	});
 
 	let showDeepslate = $derived(
-		editor.previewSymbol && SupportedPreviewTypes.includes(editor.previewSymbol.type)
+		editor.previewSymbol && SupportedPreviewTypes.includes(editor.previewSymbol.kind)
 	);
 </script>
 
@@ -76,7 +76,7 @@
 				}}
 			>
 				<Pane size={sizes.mirror}>
-					<div class="min-h-0 w-full overflow-x-hidden">
+					<div class="min-h-0 max-h-full w-full overflow-x-hidden">
 						<Mirror />
 					</div>
 				</Pane>

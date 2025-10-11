@@ -40,7 +40,7 @@ export const RequestValueAtPoint = v.object({
 export const ResponseValueAtPoint = v.object({
 	kind: v.literal('response::value_at_point'),
 	point: PointSchema,
-	value: v.number(),
+	value: v.union([v.number(), v.string()]),
 	label: v.string()
 });
 

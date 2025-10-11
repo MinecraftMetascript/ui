@@ -27,6 +27,7 @@
 </script>
 
 <button
+	data-path={path.join(".")}
 	class="
 		grid
 		w-full

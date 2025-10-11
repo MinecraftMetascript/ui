@@ -1,10 +1,10 @@
 <script lang="ts" module>
-	export const SupportedPreviewTypes = ['DensityFunction', 'Noise'];
+	export const SupportedPreviewTypes = ['DensityFunction', 'Noise', 'NoiseSettings'];
 </script>
 
 <script lang="ts">
 	import type { MouseEventHandler } from 'svelte/elements';
-	import DeepslateRenderWorker from './deepslate_render_worker?worker';
+	import DeepslateRenderWorker from './worker/deepslate_render_worker?worker';
 	import type { Action } from 'svelte/action';
 	import {
 		DeepslateRenderWorkerMessageSchema,
@@ -67,23 +67,25 @@
 				send({
 					kind: 'update::preview',
 					value: JSON.stringify(editor.previewSymbol.value),
-					type: editor.previewSymbol.type
+					type: editor.previewSymbol.kind
 				});
 			}
 		});
 
 		$effect(() => {
-			for (const symbol of Object.values(editor.project.symbols ?? {})) {
-				if (symbol.type === 'Noise') {
-					const ref = symbol.ref.split(':');
-					send({
-						kind: 'injest::noise',
-						ref: {
-							namespace: ref[0],
-							name: ref[1]
-						},
-						value: JSON.stringify(symbol.value)
-					});
+			for (const nsSymbols of Object.values(editor.project.symbols ?? {})) {
+				for (const symbol of Object.values(nsSymbols)) {
+					if (symbol.kind === 'Noise') {
+						const ref = symbol.ref.split(':');
+						send({
+							kind: 'injest::noise',
+							ref: {
+								namespace: ref[0],
+								name: ref[1]
+							},
+							value: JSON.stringify(symbol.value)
+						});
+					}
 				}
 			}
 		});
@@ -127,7 +129,7 @@
 				case 'response::value_at_point':
 					mousePosLabel = {
 						label: message.label,
-						value: message.value.toFixed(2)
+						value: typeof message.value === 'number' ? message.value.toFixed(2) : message.value
 					};
 			}
 		});

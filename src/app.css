@@ -1,5 +1,15 @@
 @import 'tailwindcss';
+@plugin "@tailwindcss/typography";
 
 button {
 	@apply cursor-pointer disabled:cursor-default;
+}
+.cm-tooltip.cm-tooltip-hover {
+	@apply bg-slate-200 px-1 py-0.5 text-xs;
+	& .cm-tooltip-arrow:before {
+		@apply bg-slate-700;
+	}
+	& .cm-tooltip-arrow:after {
+		@apply bg-transparent;
+	}
 }

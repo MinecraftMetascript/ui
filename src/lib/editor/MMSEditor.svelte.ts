@@ -8,7 +8,8 @@ export type PreviewSelection = {
 
 const GetSymbolPreviewContent = ({ project, selectedPreview }: MMSEditor) => {
 	if (!selectedPreview) return null;
-	const symbol = project.symbols?.[selectedPreview.path[0]];
+	const [ns, name] = selectedPreview.path[0]?.split(":") ?? []
+	const symbol = project.symbols?.[ns]?.[name];
 	if (!symbol) {
 		return null;
 	}
@@ -41,9 +42,11 @@ class MMSEditor {
 
 	get previewSymbol() {
 		if (this.selectedPreview?.source !== 'symbol') return null;
-		const symbol = this.project.symbols?.[this.selectedPreview.path[0]];
-		if (!symbol) return null;
-		return symbol;
+		const [sNs, sName] = this.selectedPreview.path[0]?.split(":") ?? []
+		const ns = this.project.symbols?.[sNs];
+		const val = ns?.[sName];
+		if (!val) return null;
+		return val;
 	}
 
 	get previewContent() {

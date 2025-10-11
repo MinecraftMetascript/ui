@@ -2,6 +2,8 @@ import { Go, type FileTreeLike, type MmsSymbol } from '@minecraftmetascript/mms-
 import MMSWasm from '@minecraftmetascript/mms-wasm/dist/main.wasm?init';
 import * as deepslate from 'deepslate';
 import * as zip from '@zip.js/zip.js';
+import { debounce } from 'es-toolkit';
+
 export class MMSFile {
 	private _content: string;
 	get content() {
@@ -21,11 +23,12 @@ export class MMSFile {
 		this._diagnostics = $state([]);
 	}
 
+	private goUpdate = debounce(updateFile, 100);
 	async updateContent(content: string) {
 		if (!content) return;
 		this._content = content;
-		updateFile(this.filename, content, (...args) => {
-			this.project.onProjectUpdate(...args);
+		this.goUpdate(this.filename, content, (result: Uint8Array) => {
+			this.project.onProjectUpdate(atob(result.toBase64()));
 			getFileDiag(this.filename, (serialDiag: string) => {
 				if (serialDiag) this._diagnostics = JSON.parse(serialDiag);
 				else this._diagnostics = [];
@@ -57,11 +60,67 @@ export class MMSProject {
 		a.href = url;
 		a.download = 'project.zip';
 		a.click();
-		URL.revokeObjectURL(url);
+		// URL.revokeObjectURL(url);
 		a.remove();
 	}
 
+	private lspReaders = new Set<(s: string) => void>();
+	lspSub(fn: (s: string) => void) {
+		this.lspReaders.add(fn);
+	}
+	lspUnsub(fn: (s: string) => void) {
+		this.lspReaders.delete(fn);
+	}
+
+	partial: string | null = null;
+	lspRead = (s: string | Uint8Array) => {
+		let msgStr: string;
+		// chop off the header
+		if (s instanceof Uint8Array) {
+			msgStr = atob(s.toBase64());
+		} else {
+			msgStr = s;
+		}
+		try {
+			let message = msgStr.split('\r\n\r\n')[1];
+			if (message === '' || message === undefined) {
+				message = msgStr;
+			}
+			if (this.partial) {
+				if (message) message = this.partial + message;
+				else message = this.partial;
+			}
+			try {
+				JSON.parse(message);
+				console.log({ message: JSON.parse(message) });
+				this.partial = '';
+				this.lspReaders.forEach((r) => r(message));
+			} catch (e) {
+				if (message) {
+					this.partial = message;
+				} else console.warn(e);
+			}
+		} catch (e) {
+			console.error(e);
+		}
+	};
+	lspWrite(s: string) {
+		const encoder = new TextEncoder();
+
+		const body = encoder.encode(s);
+		const header = encoder.encode(`Content-Length: ${body.byteLength}\r\n\r\n`);
+
+		const packet = new Uint8Array(body.byteLength + header.byteLength);
+		packet.set(header, 0);
+		packet.set(body, header.byteLength);
+
+		// Send exact bytes
+		// @ts-ignore allow Uint8Array until typings are updated
+		globalThis.mmsLspWrite(packet);
+	}
+
 	async init(signal?: AbortSignal) {
+		globalThis.mmsLspRead = this.lspRead;
 		const wasmInstance = await MMSWasm(this.goInstance.importObject);
 		this.goInstance.run(wasmInstance).catch((err) => {
 			console.error('MMS WASM Failed: ', { err });
@@ -91,18 +150,20 @@ export class MMSProject {
 	get fs() {
 		return this._fs;
 	}
-	private _symbols: Record<string, MmsSymbol> | null;
+	private _symbols: Record<string, Record<string, MmsSymbol>> | null;
 	get symbols() {
 		return this._symbols;
 	}
-	private set symbols(next: Record<string, MmsSymbol> | null) {
-		for (const [k, v] of Object.entries(next ?? {})) {
-			switch (v.type) {
-				case 'Noise': {
-					deepslate.WorldgenRegistries.NOISE.register(
-						new deepslate.Identifier(...(v.ref.split(':') as [string, string])),
-						deepslate.NoiseParameters.fromJson(v.value)
-					);
+	private set symbols(next: Record<string, Record<string, MmsSymbol>> | null) {
+		for (const [ns, v] of Object.entries(next ?? {})) {
+			for (const [n, s] of Object.entries(v)) {
+				switch (s.kind) {
+					case 'Noise': {
+						deepslate.WorldgenRegistries.NOISE.register(
+							new deepslate.Identifier(ns, n),
+							deepslate.NoiseParameters.fromJson(s.kind)
+						);
+					}
 				}
 			}
 		}

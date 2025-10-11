@@ -22,7 +22,7 @@
 		<h2 class="text-xl font-bold">Preview</h2>
 		<p class="inline-flex items-center font-mono text-xs leading-none italic">
 			{#if selectedPreview?.source === 'symbol'}
-				{previewSymbol?.type ?? ''}
+				{previewSymbol?.kind ?? ''}
 				<span class="ml-2 font-bold">{previewTitle}</span>
 			{:else if selectedPreview?.source === 'file'}
 				./{previewPath}

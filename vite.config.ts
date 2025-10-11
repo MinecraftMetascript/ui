@@ -6,6 +6,12 @@ export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	server: {
 		host: '0.0.0.0',
-		port: 8080
-	}
+		port: 8080,
+		fs: {
+			allow: ['./static']
+		}
+	},
+	// optimizeDeps: {
+	// 	exclude: ['@minecraftmetascript/mms-wasm']
+	// }
 });
