@@ -3,6 +3,7 @@ import MMSWasm from '@minecraftmetascript/mms-wasm/dist/main.wasm?init';
 import * as deepslate from 'deepslate';
 import * as zip from '@zip.js/zip.js';
 import { debounce } from 'es-toolkit';
+import { registerEvent } from './observability';
 
 export class MMSFile {
 	private _content: string;
@@ -121,6 +122,7 @@ export class MMSProject {
 		globalThis.mmsLspRead = this.lspRead;
 		const wasmInstance = await MMSWasm(this.goInstance.importObject);
 		this.goInstance.run(wasmInstance).catch((err) => {
+			registerEvent("MMS_WASM: Init Failed", { err })
 			console.error('MMS WASM Failed: ', { err });
 		});
 		signal?.addEventListener('abort', () => {

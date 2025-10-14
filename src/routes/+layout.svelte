@@ -3,6 +3,7 @@
 	import '../app.css';
 	import { BrandGithub, Bug } from '@steeze-ui/tabler-icons';
 	import { createEditorContext } from '../lib/editor/MMSEditor.svelte';
+	import PerformanceConsent from '../lib/PerformanceConsent.svelte';
 
 	let { children } = $props();
 	const editor = createEditorContext();
@@ -34,12 +35,12 @@ ${editor.project.source['wasm.mms']}
 
 		return out.toString();
 	});
-
-	$inspect(editor.project.source);
 </script>
 
 <main class="flex h-svh w-svw flex-col">
-	<header class="relative px-2 py-1">
+	<PerformanceConsent />
+
+	<header class="relative min-h-0 px-2 py-1">
 		<h1 class="text-xl font-bold">Minecraft Metascript Demo Editor</h1>
 		<p class="max-w-[100ch] text-xs">
 			Minecraft Metascript (MMS) is a language for authoring Minecraft datapacks. It intends to
@@ -68,5 +69,7 @@ ${editor.project.source['wasm.mms']}
 			</a>
 		</div>
 	</header>
-	{@render children?.()}
+	<div class="min-h-0 flex-1">
+		{@render children?.()}
+	</div>
 </main>

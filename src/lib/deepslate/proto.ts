@@ -56,6 +56,11 @@ export const InjestNoiseMessageSchema = v.object({
 	value: v.union([v.looseObject({}), v.string()])
 });
 
+export const ErrorCallback = v.object({
+	kind: v.literal('error'),
+	error: v.any()
+});
+
 export const DeepslateRenderWorkerMessageSchema = v.union([
 	CanvasInitMessageSchema,
 	UpdatePreviewMessageSchema,
@@ -64,6 +69,7 @@ export const DeepslateRenderWorkerMessageSchema = v.union([
 	InjestNoiseMessageSchema,
 	RequestValueAtPoint,
 	ResponseValueAtPoint,
-	UpdateMarkerPosSchema
+	UpdateMarkerPosSchema,
+	ErrorCallback
 ]);
 export type DeepslateRenderWorkerMessage = v.InferOutput<typeof DeepslateRenderWorkerMessageSchema>;

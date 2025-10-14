@@ -64,42 +64,48 @@ const drawAtCoords = (worldBounded = false) => {
 	};
 	requestAnimationFrame(() => {
 		ctx.reset();
+		try {
+			for (let xPixel = 0; xPixel <= canvas.width; xPixel += scale) {
+				for (let yPixel = 0; yPixel <= canvas.height; yPixel += scale) {
+					if (id !== compId) return;
+					const coord = pixelToCoordinate(
+						{ x: xPixel, y: yPixel },
+						origin,
+						{ w: canvas.width, h: canvas.height },
+						scale
+					);
 
-		for (let xPixel = 0; xPixel <= canvas.width; xPixel += scale) {
-			for (let yPixel = 0; yPixel <= canvas.height; yPixel += scale) {
-				if (id !== compId) return;
-				const coord = pixelToCoordinate(
-					{ x: xPixel, y: yPixel },
-					origin,
-					{ w: canvas.width, h: canvas.height },
-					scale
-				);
+					if (yInBounds(coord.y)) {
+						const value = getVal(coord);
+						if (value === null) continue;
+						if (typeof value === 'number') ctx.fillStyle = viridis(value);
+						else ctx.fillStyle = value;
+						ctx.fillRect(xPixel, yPixel, scale, scale);
+						continue;
+					}
+					const left = xPixel;
+					const right = xPixel + Math.floor(scale / 2);
+					const top = yPixel;
+					const bottom = yPixel + Math.floor(scale / 2);
+					const edge = scale / 2;
+					ctx.fillStyle = 'hsl(0,0%,30%)';
+					// Top left
+					ctx.fillRect(left, top, edge, edge);
+					// Bottom Right
+					ctx.fillRect(right, bottom, edge, edge);
 
-				if (yInBounds(coord.y)) {
-					const value = getVal(coord);
-					if (value === null) continue;
-					if (typeof value === 'number') ctx.fillStyle = viridis(value);
-					else ctx.fillStyle = value;
-					ctx.fillRect(xPixel, yPixel, scale, scale);
-					continue;
+					ctx.fillStyle = 'hsl(0,0%,50%)';
+					// Top Right
+					ctx.fillRect(right, top, edge, edge);
+					// Bottom Left
+					ctx.fillRect(left, bottom, edge, edge);
 				}
-				const left = xPixel;
-				const right = xPixel + Math.floor(scale / 2);
-				const top = yPixel;
-				const bottom = yPixel + Math.floor(scale / 2);
-				const edge = scale / 2;
-				ctx.fillStyle = 'hsl(0,0%,30%)';
-				// Top left
-				ctx.fillRect(left, top, edge, edge);
-				// Bottom Right
-				ctx.fillRect(right, bottom, edge, edge);
-
-				ctx.fillStyle = 'hsl(0,0%,50%)';
-				// Top Right
-				ctx.fillRect(right, top, edge, edge);
-				// Bottom Left
-				ctx.fillRect(left, bottom, edge, edge);
 			}
+		} catch (e) {
+			self.postMessage({
+				kind: 'error',
+				error: e
+			});
 		}
 	});
 };
@@ -118,81 +124,89 @@ const getMaybeSerialized = (v: object | string): object => {
 
 const main = async (e: MessageEvent) => {
 	const message = parse(DeepslateRenderWorkerMessageSchema, e.data);
-	switch (message.kind) {
-		case 'init': {
-			canvas = message.canvas;
-			assetPath = message.assetPath;
-			updateContext();
-			await loadAssets(assetPath);
-			break;
-		}
-		case 'injest::noise': {
-			deepslate.WorldgenRegistries.NOISE.register(
-				new deepslate.Identifier(message.ref.namespace, message.ref.name),
-				deepslate.NoiseParameters.fromJson(getMaybeSerialized(message.value))
-			);
-			break;
-		}
-		case 'update::preview': {
-			// empty out caches
-			memo.clear();
-			chunks.clear();
-			const { type } = message;
-			if (type in previews) {
-				updateFn = previews[type as keyof typeof previews];
-				value = getMaybeSerialized(message.value);
+	try {
+		switch (message.kind) {
+			case 'init': {
+				canvas = message.canvas;
+				assetPath = message.assetPath;
+				updateContext();
+				await loadAssets(assetPath);
+				break;
 			}
-			break;
-		}
-		case 'update::canvas_dimensions': {
-			canvas.height = message.y;
-			canvas.width = message.x;
-			updateContext();
-			break;
-		}
-		case 'update::view': {
-			scale = message.scale;
-			origin = message.origin;
-			minY = message.minY;
-			worldHeight = message.worldHeight;
-
-			break;
-		}
-		case 'request::value_at_point': {
-			pointValFn
-				? self.postMessage({
-						kind: 'response::value_at_point',
-						point: message.point,
-						value: getVal(message.point) ?? null,
-						label: pointValLabel
-					})
-				: null;
-			return;
-		}
-
-		case 'update::marker_pos': {
-			markerPosition = message.pos;
-			break;
-		}
-	}
-
-	if (ctx) {
-		reset(); // Ensure we end up with a steady random structure unless explicitly reset
-		updateFn?.(value);
-
-		if (markerPosition) {
-			requestAnimationFrame(() => {
-				if (!markerPosition) return;
-				ctx.fillStyle = 'rgb(255,0,0)';
-				const pos = coordinateToPixel(
-					markerPosition,
-					origin,
-					{ w: canvas.width, h: canvas.height },
-					scale
+			case 'injest::noise': {
+				deepslate.WorldgenRegistries.NOISE.register(
+					new deepslate.Identifier(message.ref.namespace, message.ref.name),
+					deepslate.NoiseParameters.fromJson(getMaybeSerialized(message.value))
 				);
-				ctx.fillRect(pos.x, pos.y, scale, scale);
-			});
+				break;
+			}
+			case 'update::preview': {
+				// empty out caches
+				memo.clear();
+				chunks.clear();
+				const { type } = message;
+				if (type in previews) {
+					updateFn = previews[type as keyof typeof previews];
+					value = getMaybeSerialized(message.value);
+				}
+				break;
+			}
+			case 'update::canvas_dimensions': {
+				canvas.height = message.y;
+				canvas.width = message.x;
+				updateContext();
+				break;
+			}
+			case 'update::view': {
+				scale = message.scale;
+				origin = message.origin;
+				minY = message.minY;
+				worldHeight = message.worldHeight;
+
+				break;
+			}
+			case 'request::value_at_point': {
+				pointValFn
+					? self.postMessage({
+							kind: 'response::value_at_point',
+							point: message.point,
+							value: getVal(message.point) ?? null,
+							label: pointValLabel
+						})
+					: null;
+				return;
+			}
+
+			case 'update::marker_pos': {
+				markerPosition = message.pos;
+				break;
+			}
 		}
+
+		if (ctx) {
+			reset(); // Ensure we end up with a steady random structure unless explicitly reset
+			updateFn?.(value);
+
+			if (markerPosition) {
+				requestAnimationFrame(() => {
+					if (!markerPosition) return;
+					ctx.fillStyle = 'rgb(255,0,0)';
+					const pos = coordinateToPixel(
+						markerPosition,
+						origin,
+						{ w: canvas.width, h: canvas.height },
+						scale
+					);
+					ctx.fillRect(pos.x, pos.y, scale, scale);
+				});
+			}
+		}
+	} catch (e) {
+		console.error(e)
+		self.postMessage({
+			kind: 'error',
+			error: e
+		});
 	}
 };
 

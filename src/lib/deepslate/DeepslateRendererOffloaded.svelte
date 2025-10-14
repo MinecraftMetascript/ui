@@ -27,6 +27,7 @@
 	} from '@steeze-ui/tabler-icons';
 	import { pixelToCoordinate } from './lib';
 	import { base } from '$app/paths';
+	import { registerError, registerEvent } from '../observability';
 
 	const editor = useEditorContext();
 
@@ -125,6 +126,8 @@
 			if (mousePos && editor.previewSymbol) fetchValue();
 		});
 
+		const editor = useEditorContext();
+
 		worker.addEventListener('message', (e) => {
 			const message = parse(DeepslateRenderWorkerMessageSchema, e.data);
 			switch (message.kind) {
@@ -133,6 +136,15 @@
 						label: message.label,
 						value: typeof message.value === 'number' ? message.value.toFixed(2) : message.value
 					};
+					break;
+				case 'error':
+					const e =
+						message.error instanceof Error
+							? message.error
+							: new Error('Error in deepslate worker', { cause: message.error });
+					let content = editor.project.source['wasm.mms'];
+					registerError(e, content);
+					break;
 			}
 		});
 
