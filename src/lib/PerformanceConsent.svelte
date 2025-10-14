@@ -81,7 +81,7 @@
 				onclick={() => declineConsent()}
 			>
 				<div class="relative">
-					<Icon src={X} class="absolute top-1/2 left-1/2 h-4 w-4 -translate-1/2" />
+					<Icon src={X} class="size-6 stroke-4" />
 				</div>
 				Decline
 				<div class="absolute bottom-0 left-0 h-1 w-full bg-red-300">
