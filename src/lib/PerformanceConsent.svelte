@@ -40,7 +40,8 @@
 				if (timeout > 0) {
 					requestAnimationFrame(animate);
 				} else {
-					console.log('Done?');
+					console.log('Performance monitoring consent declined');
+					declineConsent();
 				}
 			};
 			animate();
@@ -74,21 +75,18 @@
 			>
 				<Icon src={Check} class="size-6 stroke-4" />
 				Accept
-				<div class="absolute bottom-0 left-0 h-1 w-full bg-green-300">
-					<div
-						class="h-full bg-green-900"
-						style:width="{100 - (timeout / TIMEOUT_MAX) * 100}%"
-					></div>
-				</div>
 			</button>
 			<button
-				class="flex h-12 items-center gap-2 bg-red-400 px-4 py-1 text-lg text-red-950 hover:bg-red-600"
+				class="relative flex h-12 items-center gap-2 bg-red-400 px-4 py-1 text-lg text-red-950 hover:bg-red-600"
 				onclick={() => declineConsent()}
 			>
 				<div class="relative">
 					<Icon src={X} class="absolute top-1/2 left-1/2 h-4 w-4 -translate-1/2" />
 				</div>
 				Decline
+				<div class="absolute bottom-0 left-0 h-1 w-full bg-red-300">
+					<div class="h-full bg-red-900" style:width="{100 - (timeout / TIMEOUT_MAX) * 100}%"></div>
+				</div>
 			</button>
 		</div>
 	</div>
